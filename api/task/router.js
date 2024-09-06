@@ -1,22 +1,33 @@
 const express = require('express');
-const helpers = require('./model');
+const Task = require('./model');
 
 const router = express.Router();
 
-router.get('/tasks', (req, res, next) => {
-  helpers.get_tasks()
-    .then(task => {
-      res.status(200).json(task);
-    })
-    .catch(next); 
+router.get('/', async (req, res, next) => {
+  try {
+    const tasks = await Task.getTasks();
+    res.json(tasks);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/tasks', (req, res, next) => {
-  helpers.create_task(req.body)
-    .then(task => {
-      res.status(201).json(task);
-    })
-    .catch(next);
+router.post('/', async (req, res, next) => {
+  try {
+    if (!req.body.task_description) {
+      return res.status(400).json({ message: "task_description is required" });
+    }
+    if (!req.body.project_id) {
+      return res.status(400).json({ message: "project_id is required" });
+    }
+    const newTask = await Task.addTask(req.body);
+    if (!newTask) {
+      return res.status(404).json({ message: "The project with the specified project_id does not exist" });
+    }
+    res.status(201).json(newTask);
+  } catch (err) {
+    next(err);
+  }
 });
 
-module.exports = router
+module.exports = router;

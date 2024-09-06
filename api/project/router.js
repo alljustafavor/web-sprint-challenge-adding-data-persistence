@@ -1,22 +1,27 @@
 const express = require('express');
-const helpers = require('./model');
+const Project = require('./model');
 
 const router = express.Router();
 
-router.get('/projects', (req, res, next) => {
-  helpers.get_projects()
-    .then(project => {
-      res.status(200).json(project);
-    })
-    .catch(next); 
+router.get('/', async (req, res, next) => {
+  try {
+    const projects = await Project.getProjects();
+    res.json(projects);
+  } catch (err) {
+    next(err);
+  }
 });
 
-router.post('/projects', (req, res, next) => {
-  helpers.create_project(req.body)
-    .then(project => {
-      res.status(201).json(project);
-    })
-    .catch(next);
+router.post('/', async (req, res, next) => {
+  try {
+    if (!req.body.project_name) {
+      return res.status(400).json({ message: "project_name is required" });
+    }
+    const newProject = await Project.addProject(req.body);
+    res.status(201).json(newProject);
+  } catch (err) {
+    next(err);
+  }
 });
 
-module.exports = router
+module.exports = router;
